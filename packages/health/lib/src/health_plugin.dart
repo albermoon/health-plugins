@@ -240,10 +240,12 @@ class Health {
                 type == HealthDataType.HIGH_HEART_RATE_EVENT ||
                 type == HealthDataType.LOW_HEART_RATE_EVENT ||
                 type == HealthDataType.IRREGULAR_HEART_RATE_EVENT ||
+                type == HealthDataType.EXERCISE_TIME ||
                 type == HealthDataType.WALKING_HEART_RATE) &&
             permission != HealthDataAccess.READ) {
-          throw ArgumentError(
-              'Requesting WRITE permission on ELECTROCARDIOGRAM / HIGH_HEART_RATE_EVENT / LOW_HEART_RATE_EVENT / IRREGULAR_HEART_RATE_EVENT / WALKING_HEART_RATE is not allowed.');
+          // throw ArgumentError(  
+          //     'Requesting WRITE permission on ELECTROCARDIOGRAM / HIGH_HEART_RATE_EVENT / LOW_HEART_RATE_EVENT / IRREGULAR_HEART_RATE_EVENT / WALKING_HEART_RATE is not allowed.');
+          permissions[i] = HealthDataAccess.READ;
         }
       }
     }
@@ -618,8 +620,7 @@ class Health {
     List<HealthDataPoint> dataPoints = [];
 
     for (var type in types) {
-      final result =
-          await _prepareQuery(startTime, endTime, type, includeManualEntry);
+      final result = await _prepareQuery(startTime, endTime, type, includeManualEntry);
       dataPoints.addAll(result);
     }
 
@@ -631,7 +632,7 @@ class Health {
     return removeDuplicates(dataPoints);
   }
 
-  /// Fetch a list of health data points based on [types].
+  /// Fetch a list of health data points based on [Dates][types].
   Future<List<HealthDataPoint>> getHealthIntervalDataFromTypes(
       {required DateTime startDate,
       required DateTime endDate,
@@ -825,10 +826,7 @@ class Health {
     final dataType = message["dataType"] as HealthDataType;
     final dataPoints = message["dataPoints"] as List;
 
-    return dataPoints
-        .map<HealthDataPoint>((dataPoint) =>
-            HealthDataPoint.fromHealthDataPoint(dataType, dataPoint))
-        .toList();
+    return dataPoints.map<HealthDataPoint>((dataPoint) => HealthDataPoint.fromHealthDataPoint(dataType, dataPoint)).toList();
   }
 
   /// Return a list of [HealthDataPoint] based on [points] with no duplicates.

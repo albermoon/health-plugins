@@ -55,8 +55,7 @@ const _$HealthDataTypeEnumMap = {
   HealthDataType.BASAL_ENERGY_BURNED: 'BASAL_ENERGY_BURNED',
   HealthDataType.BLOOD_GLUCOSE: 'BLOOD_GLUCOSE',
   HealthDataType.BLOOD_OXYGEN: 'BLOOD_OXYGEN',
-  HealthDataType.BLOOD_PRESSURE_DIASTOLIC: 'BLOOD_PRESSURE_DIASTOLIC',
-  HealthDataType.BLOOD_PRESSURE_SYSTOLIC: 'BLOOD_PRESSURE_SYSTOLIC',
+  HealthDataType.BLOOD_PRESSURE: 'BLOOD_PRESSURE',
   HealthDataType.BODY_FAT_PERCENTAGE: 'BODY_FAT_PERCENTAGE',
   HealthDataType.BODY_MASS_INDEX: 'BODY_MASS_INDEX',
   HealthDataType.BODY_TEMPERATURE: 'BODY_TEMPERATURE',
@@ -186,6 +185,29 @@ Map<String, dynamic> _$HealthValueToJson(HealthValue instance) {
   return val;
 }
 
+BloodPressureValue _$BloodPressureValueFromJson(Map<String, dynamic> json) =>
+    BloodPressureValue(
+      systolic: json['systolic'] as num,
+      diastolic: json['diastolic'] as num,
+      heartrate: json['heartrate'] as num?,
+    )..$type = json['__type'] as String?;
+
+Map<String, dynamic> _$BloodPressureValueToJson(BloodPressureValue instance) {
+  final val = <String, dynamic>{};
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('__type', instance.$type);
+  val['systolic'] = instance.systolic;
+  val['diastolic'] = instance.diastolic;
+  writeNotNull('heartrate', instance.heartrate);
+  return val;
+}
+
 NumericHealthValue _$NumericHealthValueFromJson(Map<String, dynamic> json) =>
     NumericHealthValue(
       numericValue: json['numeric_value'] as num,
@@ -239,13 +261,13 @@ WorkoutHealthValue _$WorkoutHealthValueFromJson(Map<String, dynamic> json) =>
     WorkoutHealthValue(
       workoutActivityType: $enumDecode(
           _$HealthWorkoutActivityTypeEnumMap, json['workout_activity_type']),
-      totalEnergyBurned: json['total_energy_burned'] as int?,
+      totalEnergyBurned: (json['total_energy_burned'] as num?)?.toInt(),
       totalEnergyBurnedUnit: $enumDecodeNullable(
           _$HealthDataUnitEnumMap, json['total_energy_burned_unit']),
-      totalDistance: json['total_distance'] as int?,
+      totalDistance: (json['total_distance'] as num?)?.toInt(),
       totalDistanceUnit: $enumDecodeNullable(
           _$HealthDataUnitEnumMap, json['total_distance_unit']),
-      totalSteps: json['total_steps'] as int?,
+      totalSteps: (json['total_steps'] as num?)?.toInt(),
       totalStepsUnit: $enumDecodeNullable(
           _$HealthDataUnitEnumMap, json['total_steps_unit']),
     )..$type = json['__type'] as String?;

@@ -13,6 +13,55 @@ class HealthValue extends Serializable {
   Map<String, dynamic> toJson() => _$HealthValueToJson(this);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake, includeIfNull: false)
+class BloodPressureValue extends HealthValue{
+   /// Array of frequencies of the test.
+  num systolic;
+
+  /// Threshold in decibel for the left ear.
+  num diastolic;
+
+  /// Threshold in decibel for the right ear.
+  num? heartrate;
+
+  BloodPressureValue({
+    required this.systolic,
+    required this.diastolic,
+    this.heartrate,
+  });
+
+  /// Create a [AudiogramHealthValue] based on a health data point from native data format.
+  factory BloodPressureValue.fromHealthDataPoint(dynamic dataPoint) =>
+    BloodPressureValue(
+      systolic: dataPoint['systolic'] as num,
+      diastolic: dataPoint['diastolic'] as num,             
+      heartrate: dataPoint['heartrate'] as num? ?? 0
+    );
+
+  @override
+  String toString() => """$runtimeType - systolica: ${systolic.toString()},
+    diastolica: ${diastolic.toString()},
+    ritmo cardiaco: ${heartrate.toString()}""";
+
+  @override
+  Function get fromJsonFunction => _$BloodPressureValueFromJson;
+  factory BloodPressureValue.fromJson(Map<String, dynamic> json) =>
+      FromJsonFactory().fromJson(json) as BloodPressureValue;
+  @override
+  Map<String, dynamic> toJson() => _$BloodPressureValueToJson(this);
+  
+  @override
+  bool operator ==(Object other) =>
+      other is BloodPressureValue &&
+      systolic == other.systolic &&
+      diastolic == other.diastolic &&
+      heartrate == other.heartrate;
+
+  @override
+  int get hashCode =>
+      Object.hash(systolic, diastolic, heartrate);
+
+}
 /// A numerical value from Apple HealthKit or Google Fit
 /// such as integer or double. E.g. 1, 2.9, -3
 ///
@@ -46,6 +95,9 @@ class NumericHealthValue extends HealthValue {
   @override
   int get hashCode => numericValue.hashCode;
 }
+
+
+
 
 /// A [HealthValue] object for audiograms
 ///

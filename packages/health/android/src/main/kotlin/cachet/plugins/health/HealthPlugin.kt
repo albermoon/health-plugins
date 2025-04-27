@@ -43,6 +43,7 @@ const val CHANNEL_NAME = "flutter_health"
 const val ACTIVE_ENERGY_BURNED = "ACTIVE_ENERGY_BURNED"
 const val AGGREGATE_STEP_COUNT = "AGGREGATE_STEP_COUNT"
 const val BASAL_ENERGY_BURNED = "BASAL_ENERGY_BURNED"
+const val BLOOD_PRESSURE = "BLOOD_PRESSURE"
 const val BLOOD_GLUCOSE = "BLOOD_GLUCOSE"
 const val BLOOD_OXYGEN = "BLOOD_OXYGEN"
 const val BLOOD_PRESSURE_DIASTOLIC = "BLOOD_PRESSURE_DIASTOLIC"
@@ -825,6 +826,28 @@ class HealthPlugin(private var channel: MethodChannel? = null) :
                                 }
                             }
                         }
+                    }else if (classType == BloodPressureRecord::class){
+                        for (rec in records) {
+                            val record = rec as BloodPressureRecord;
+                            val systolic = rec.systolic.inMillimetersOfMercury;
+                            val diastolic = rec.diastolic.inMillimetersOfMercury;
+                            healthConnectData.add(
+                                    mapOf<String, Any?>(
+                                            "systolic" to systolic,
+                                            "diastolic" to diastolic,
+                                            "date_from" to rec.time.toEpochMilli(),
+                                            "date_to" to rec.metadata.lastModifiedTime.toEpochMilli(),
+                                            "source_id" to rec.metadata.dataOrigin.toString(),
+                                            "source_name" to "google_health",
+                                            "source_name" to rec.metadata.dataOrigin.packageName,
+                                            "recording_method" to rec.metadata.recordingMethod
+                                            //"device" to rec.metadata.device,
+                                            //"body_position" to rec.bodyPosition.,
+                                            //"measurementLocation" to rec.measurementLocation
+
+                                    )
+                            )
+                        }
                     } else {
                         val filteredRecords = filterRecordsByRecordingMethods(
                             recordingMethodsToFilter,
@@ -1176,29 +1199,14 @@ class HealthPlugin(private var channel: MethodChannel? = null) :
             is BloodPressureRecord ->
                 return listOf(
                     mapOf<String, Any>(
-                        "uuid" to
-                                metadata.id,
-                        "value" to
-                                if (dataType ==
-                                    BLOOD_PRESSURE_DIASTOLIC
-                                )
-                                    record.diastolic
-                                        .inMillimetersOfMercury
-                                else
-                                    record.systolic
-                                        .inMillimetersOfMercury,
-                        "date_from" to
-                                record.time
-                                    .toEpochMilli(),
-                        "date_to" to
-                                record.time
-                                    .toEpochMilli(),
+                        "uuid" to metadata.id,
+                        "systolic" to record.systolic.inMillimetersOfMercury,
+                        "diastolic" to record.diastolic.inMillimetersOfMercury,
+                        "date_from" to record.time.toEpochMilli(),
+                        "date_to" to record.time.toEpochMilli(),
                         "source_id" to "",
-                        "source_name" to
-                                metadata.dataOrigin
-                                    .packageName,
-                        "recording_method" to
-                                        metadata.recordingMethod
+                        "source_name" to metadata.dataOrigin.packageName,
+                        "recording_method" to metadata.recordingMethod
                     ),
                 )
 
@@ -2383,6 +2391,7 @@ class HealthPlugin(private var channel: MethodChannel? = null) :
             HEART_RATE to HeartRateRecord::class,
             BODY_TEMPERATURE to BodyTemperatureRecord::class,
             BODY_WATER_MASS to BodyWaterMassRecord::class,
+            BLOOD_PRESSURE to BloodPressureRecord::class,
             BLOOD_PRESSURE_SYSTOLIC to BloodPressureRecord::class,
             BLOOD_PRESSURE_DIASTOLIC to BloodPressureRecord::class,
             BLOOD_OXYGEN to OxygenSaturationRecord::class,

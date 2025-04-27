@@ -111,6 +111,10 @@ class HealthDataPoint {
   ) {
     // Handling different [HealthValue] types
     HealthValue value = switch (dataType) {
+      HealthDataType.BLOOD_PRESSURE=> BloodPressureValue.fromHealthDataPoint(dataPoint),
+      // HealthDataType.SYMPTOM=> SymptomsHealthValue.fromHealthDataPoint(dataPoint),
+      // HealthDataType.MOOD=> MoodValue.fromHealthDataPoint(dataPoint),
+
       HealthDataType.AUDIOGRAM =>
         AudiogramHealthValue.fromHealthDataPoint(dataPoint),
       HealthDataType.WORKOUT =>
@@ -196,6 +200,7 @@ class HealthDataPoint {
       sourceId == other.sourceId &&
       sourceName == other.sourceName &&
       recordingMethod == other.recordingMethod &&
+
       metadata == other.metadata;
 
   @override

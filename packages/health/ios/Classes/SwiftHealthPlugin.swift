@@ -32,6 +32,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
     let BASAL_ENERGY_BURNED = "BASAL_ENERGY_BURNED"
     let BLOOD_GLUCOSE = "BLOOD_GLUCOSE"
     let BLOOD_OXYGEN = "BLOOD_OXYGEN"
+    let BLOOD_PRESSURE = "BLOOD_PRESSURE"
     let BLOOD_PRESSURE_DIASTOLIC = "BLOOD_PRESSURE_DIASTOLIC"
     let BLOOD_PRESSURE_SYSTOLIC = "BLOOD_PRESSURE_SYSTOLIC"
     let BODY_FAT_PERCENTAGE = "BODY_FAT_PERCENTAGE"
@@ -841,10 +842,43 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         }
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
         
-        let query = HKSampleQuery(
-            sampleType: dataType, predicate: predicate, limit: limit, sortDescriptors: [sortDescriptor]
-        ) {
-            [self]
+        if(dataTypeKey == "BLOOD_PRESSURE"){
+
+            let correlationType = HKObjectType.correlationType(forIdentifier: .bloodPressure)!
+            let predicate = HKQuery.predicateForSamples(withStart: dateFrom, end: dateTo, options: [.strictStartDate])
+            let correlationQuery = HKCorrelationQuery(type: correlationType, predicate: predicate, samplePredicates: nil) { query, correlations, error in
+                guard let correlations = correlations, error == nil else {
+                    DispatchQueue.main.async {
+                        result(FlutterError(code: "QUERY_ERROR", message: "Failed to fetch blood pressure data", details: error?.localizedDescription))
+                    }
+                    return
+                }
+
+                let results = correlations.map { correlation -> NSDictionary in
+                    let systolicSample = correlation.objects(for: HKObjectType.quantityType(forIdentifier: .bloodPressureSystolic)!).first as? HKQuantitySample
+                    let diastolicSample = correlation.objects(for: HKObjectType.quantityType(forIdentifier: .bloodPressureDiastolic)!).first as? HKQuantitySample
+
+                    return [
+                        "uuid": correlation.uuid.uuidString,
+                        "systolic": systolicSample?.quantity.doubleValue(for: HKUnit.millimeterOfMercury()) ?? 0,
+                        "diastolic": diastolicSample?.quantity.doubleValue(for: HKUnit.millimeterOfMercury()) ?? 0,
+                        "date_from": Int(correlation.startDate.timeIntervalSince1970 * 1000),
+                        "date_to": Int(correlation.endDate.timeIntervalSince1970 * 1000),
+                        "source_id": systolicSample?.sourceRevision.source.bundleIdentifier ?? "",
+                        "source_name": systolicSample?.sourceRevision.source.name ?? "",
+                        "is_manual_entry": systolicSample?.metadata?[HKMetadataKeyWasUserEntered] as? Bool ?? false
+                    ]
+                }
+                DispatchQueue.main.async {
+                    result(results)
+                }
+            }
+            healthStore.execute(correlationQuery)
+            }
+        else{
+
+            let query = HKSampleQuery( sampleType: dataType, predicate: predicate, limit: limit, sortDescriptors: [sortDescriptor]) {
+                [self]
             x, samplesOrNil, error in
             
             switch samplesOrNil {
@@ -1035,6 +1069,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         }
         
         HKHealthStore().execute(query)
+        }
     }
     
     @available(iOS 14.0, *)
@@ -1417,10 +1452,10 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
             dataTypesDict[PERIPHERAL_PERFUSION_INDEX] = HKSampleType.quantityType(
                 forIdentifier: .peripheralPerfusionIndex)!
             
-            dataTypesDict[BLOOD_PRESSURE_DIASTOLIC] = HKSampleType.quantityType(
-                forIdentifier: .bloodPressureDiastolic)!
-            dataTypesDict[BLOOD_PRESSURE_SYSTOLIC] = HKSampleType.quantityType(
-                forIdentifier: .bloodPressureSystolic)!
+            dataTypesDict[BLOOD_PRESSURE] = HKCorrelationType.correlationType(forIdentifier: .bloodPressure)!
+            dataTypesDict[BLOOD_PRESSURE_DIASTOLIC] = HKSampleType.quantityType(forIdentifier: .bloodPressureDiastolic)!
+            dataTypesDict[BLOOD_PRESSURE_SYSTOLIC] = HKSampleType.quantityType(forIdentifier: .bloodPressureSystolic)!
+            
             dataTypesDict[BODY_FAT_PERCENTAGE] = HKSampleType.quantityType(
                 forIdentifier: .bodyFatPercentage)!
             dataTypesDict[LEAN_BODY_MASS] = HKSampleType.quantityType(forIdentifier: .leanBodyMass)!
